@@ -42,12 +42,8 @@ vector<int> line_to_ints(const string& input_line)
     
     vector<int> cisla;
     
-    while(!stream)
-    {
-        int x;
-        stream >> x;
-        cisla.push_back(x);
-    }
+    int x;
+    while(stream >> x) cisla.push_back(x);
     
     return cisla;
 }
@@ -86,8 +82,8 @@ bool sat_solve(const string& input)
     {
         cout << "Riesenie existuje a je:" << endl;
         
-        for(int i=0;i<variable_count;++i)
-        cout << i << " is " << solver.get_model()[i] << endl;
+        //for(int i=0;i<variable_count;++i)
+        //cout << i << " is " << solver.get_model()[i] << endl;
         
         return true;
     }
@@ -110,19 +106,27 @@ int main()
         
         vector<vector<int> > G(n);
         
+        string odpad; getline(cin, odpad);
+        
         for(int i=0;i<n;++i)
         {
             string input_line;
             getline(cin, input_line);
-            auto x = line_to_ints(input_line);
+            auto susedia = line_to_ints(input_line);
+            
+            for(const int x : susedia) G[i].push_back(x);
         }
         
-        /// vypocet
+        // vypocet
         
         {
-            TimeProfiler x("Vypocet" + to_string(f));
-            cnf_colouring(G, 10);
+            //TimeProfiler x("Vypocet" + to_string(f));
+            
+            string sat_formula = cnf_colouring(G, 3);
+            //sat_solve(sat_formula);
         }
+        
+        return 0;
     }
     
     return 0;
