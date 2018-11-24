@@ -14,7 +14,6 @@ using namespace CMSat;
 
 using namespace std;
 
-
 class TimeProfiler
 {
     
@@ -48,7 +47,7 @@ vector<int> line_to_ints(const string& input_line)
     return cisla;
 }
 
-bool sat_solve(const string& input)
+bool sat_solve(const string& input, vector<lbool>& ohodnotenie)
 {
     std::stringstream inp_stream (input);
     
@@ -80,10 +79,15 @@ bool sat_solve(const string& input)
     
     if(ret == l_True)
     {
-        cout << "Riesenie existuje a je:" << endl;
+        cout << "Riesenie existuje:" << endl;
         
-        //for(int i=0;i<variable_count;++i)
-        //cout << i << " is " << solver.get_model()[i] << endl;
+        ohodnotenie.resize(variable_count);
+        
+        for(int i=0;i<variable_count;++i) 
+        {
+            ohodnotenie[i] = solver.get_model()[i];
+            cout << i << " is " << solver.get_model()[i] << endl;
+        }
         
         return true;
     }
@@ -92,6 +96,55 @@ bool sat_solve(const string& input)
         cout << "Riesenie neexistuje!" << endl;
         return false;
     }
+}
+
+bool over(const Graph& G, const vector<lbool>& ohodnotenie, int k)
+{
+    std::map<std::pair<int, int>, int> UM;
+    
+    int n = G.size(), m = 0;
+    
+    for(size_t i=0;i<G.size();++i)
+    {
+        for(size_t j=0;j<G[i].size();++j) if( UM.find({i, j}) == UM.end() )
+        {
+            UM[{i, j}] = UM[{j, i}] = m;
+            ++m;
+        }
+    }
+    
+    for(int i=0;i<m;++i)
+    {
+        int pocet_ofarbeni = 0;
+        
+        for(int j=0;j<k;++j) if( ohodnotenie[i*k+j] == l_True)
+        {
+            pocet_ofarbeni++;
+        }   
+        
+        if(pocet_ofarbeni != 1)
+        {
+            cerr << "Zly pocet ofarbeni.\n";
+            return false;
+        }
+    }
+    
+    for(int f=0;f<n;++f)
+        for(int i=0;i<G[n].size();++i)
+            for(int j=i+1;j<G[n].size();++j)
+            {
+                int a, b;
+                a = UM[{f, i}];
+                b = UM[{f, j}];
+                
+                for(int l=0;l<k;++l) if(ohodnotenie[a*k+l] == l_True && ohodnotenie[b*k+l] == l_True)
+                {
+                    cerr << "Dve hrany ofarbene rovnako.\n";
+                    return false;
+                }
+            }
+            
+    return true;
 }
 
 int main()
@@ -103,6 +156,8 @@ int main()
     {
         int id, n;
         cin >> id >> n;
+        
+        cout << id << endl;
         
         vector<vector<int> > G(n);
         
@@ -123,7 +178,12 @@ int main()
             //TimeProfiler x("Vypocet" + to_string(f));
             
             string sat_formula = cnf_colouring(G, 3);
-            //sat_solve(sat_formula);
+            
+            vector<lbool> ohodnotenie;
+            if(sat_solve(sat_formula, ohodnotenie))
+            {
+                ;//over(G, ohodnotenie, 3);
+            }
         }
         
         return 0;

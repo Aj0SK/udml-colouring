@@ -16,7 +16,7 @@ std::string cnf_colouring(Graph G, int k)
     
     for(size_t i=0;i<G.size();++i)
     {
-        for(size_t j=0;j<G[i].size();++j)
+        for(size_t j=0;j<G[i].size();++j) if( UM.find({i, j}) == UM.end() )
         {
             UM[{i, j}] = UM[{j, i}] = m;
             help.push_back({i, j});
@@ -36,7 +36,7 @@ std::string cnf_colouring(Graph G, int k)
     {
         for(int nn = i*k;nn<((i+1)*k);++nn)
         {
-            for(int j = i*k;j<((i+1)*k);++j) if(j != nn)
+            for(int j = nn+1;j<((i+1)*k);++j)
             {
                 std::vector<int>clause;
                 
@@ -46,6 +46,26 @@ std::string cnf_colouring(Graph G, int k)
                 clauses.push_back(clause);
             }
         }
+    }
+    
+    for(int f=0;f<n;++f)
+    {
+        for(int i=0;i<G[f].size();++i)
+            for(int j=i+1;j<G[f].size();++j)
+                for(int l=0;l<k;++l)
+                {
+                    std::vector<int>clause;
+                
+                    int a, b;
+                    
+                    a = UM[{f, G[f][i]}];
+                    b = UM[{f, G[f][j]}];
+                    
+                    clause.push_back(-(a*k+l));
+                    clause.push_back(-(b*k+l));
+                
+                    clauses.push_back(clause);
+                }
     }
     
     std::string out = "p cnf " + std::to_string(m*k) + " " + std::to_string(clauses.size()) + "\n";
