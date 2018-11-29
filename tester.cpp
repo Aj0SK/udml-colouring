@@ -50,12 +50,11 @@ vector<int> line_to_ints(const string& input_line)
 bool sat_solve(const string& input, vector<lbool>& ohodnotenie)
 {
     std::stringstream inp_stream (input);
-    
     SATSolver solver;
-    solver.set_num_threads(4);
-    
     string format1, format2;
     int clauses_count, variable_count;
+    
+    solver.set_num_threads(4);
     
     inp_stream >> format1 >> format2 >> variable_count >> clauses_count;
     
@@ -83,11 +82,8 @@ bool sat_solve(const string& input, vector<lbool>& ohodnotenie)
         
         ohodnotenie.resize(variable_count);
         
-        for(int i=0;i<variable_count;++i) 
-        {
+        for(int i=0;i<variable_count;++i)
             ohodnotenie[i] = solver.get_model()[i];
-            //cout << i << " is " << solver.get_model()[i] << endl;
-        }
         
         return true;
     }
@@ -127,8 +123,8 @@ bool over(const Graph& G, const vector<lbool>& ohodnotenie, int k)
     }
     
     for(int f=0;f<n;++f)
-        for(int i=0;i<G[f].size();++i)
-            for(int j=i+1;j<G[f].size();++j)
+        for(size_t i=0;i<G[f].size();++i)
+            for(size_t j=i+1;j<G[f].size();++j)
             {
                 int a, b;
                 a = UM[{f, G[f][i]}];
@@ -143,6 +139,65 @@ bool over(const Graph& G, const vector<lbool>& ohodnotenie, int k)
             
     cout << "Overenie prebehlo uspesne!\n";
     return true;
+}
+
+int cc;
+
+bool zafarbi(const vector<vector<int> >& s_G, const vector<pair<int, int> >& to_nodes, const int k, vector<int>& ofarbene, int dalsi)
+{
+    if(dalsi == to_nodes.size()) return true;
+    
+    if(++cc && cc > 100000000)
+    {
+        if(cc == 100000001)cout << "Vypocet trval pridlho\n";
+        return false;
+    }
+    
+    for(int i=0;i<k;++i)
+    {
+        ofarbene[dalsi] = i;
+        
+        int a, b, counter=0;
+        a = to_nodes[dalsi].first;
+        b = to_nodes[dalsi].second;
+
+        for(int x : s_G[a]) if(ofarbene[x] == i) counter++;
+        for(int x : s_G[b]) if(ofarbene[x] == i) counter++;
+        
+        if( counter == 2 && zafarbi(s_G, to_nodes, k, ofarbene, dalsi+1) ) return true;
+        
+        ofarbene[dalsi] = -1;
+    }
+    
+    return false;
+}
+
+bool je_zafarbitelny(const Graph& G, int k)
+{
+    cc = 0;
+    int m = 0;
+    
+    std::map<std::pair<int, int>, int> UM;
+    vector< pair<int, int> > to_nodes;
+    
+    for(size_t i=0;i<G.size();++i)
+        for(const int v : G[i]) if( UM.find({i, v}) == UM.end() )
+        {
+            UM[{i, v}] = UM[{v, i}] = m;
+            to_nodes.push_back({v, i});
+            ++m;
+        }
+        
+    vector<int> ofarbene(m, -1);
+
+    vector<vector<int> > s_G(G.size());
+     
+    for(size_t i=0;i<G.size();++i)
+        for(const int v : G[i])
+            s_G[i].push_back(UM[{v, i}]);
+    
+    if( zafarbi(s_G, to_nodes, k, ofarbene, 0) ) return true;
+    return false;
 }
 
 int main()
@@ -172,6 +227,8 @@ int main()
         
         // vypocet
         
+        bool vysledok = false;
+        
         {
             TimeProfiler x("Vypocet " + to_string(f));
             
@@ -180,8 +237,26 @@ int main()
             vector<lbool> ohodnotenie;
             if(sat_solve(sat_formula, ohodnotenie))
             {
+                vysledok = true;
                 over(G, ohodnotenie, 3);
             }
+        }
+        
+        {
+            TimeProfiler x("Vypocet " + to_string(f));
+            
+            if (je_zafarbitelny(G, 3))
+            {
+                cout << "Kontrola : Je zafarbitelny.";
+                if(vysledok == false)
+                {
+                    cout << "Red flag!\n";
+                    char xx;
+                    cin >> xx;
+                    return 0;
+                }
+            }
+            else cout << "Kontrola : Nie je zafarbitelny.";
         }
         
     }
