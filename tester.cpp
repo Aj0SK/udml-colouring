@@ -55,9 +55,12 @@ class backtrack_solver
 {
 private:
     Graph G;
-    int k;
+    int K;
+    double TIMEOUT;
     
     chrono::high_resolution_clock::time_point start, end;
+    
+    bool zafarbitelnost;
     
 public:
 
@@ -67,10 +70,18 @@ public:
         return diff.count();
     }
     
-    backtrack_solver(Graph g, int ofarbenie)
+    void print_outcome()
+    {
+        if(total_time() > TIMEOUT) cout << "Backtrack skoncil timeoutom po " << TIMEOUT << " sekundach\n";
+        else if(zafarbitelnost) cout << "Graf JE backtrackom zafarbitelny.\n";
+        else cout << "Graf NIE JE backtrackom zafarbitelny.\n";
+    }
+    
+    backtrack_solver(const Graph& g, int k, double timeout)
     {
         G = g;
-        k = ofarbenie;
+        K = k;
+        TIMEOUT = timeout;
     }
     
     bool zafarbi(const vector<vector<int> >& s_G, const vector<pair<int, int> >& to_nodes, vector<int>& ofarbene, int dalsi)
@@ -80,9 +91,9 @@ public:
         auto isend = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> diff = isend-start;
         
-        if(diff.count() > 10.0) return false;
+        if(diff.count() > TIMEOUT) return false;
         
-        for(int i=0;i<k;++i)
+        for(int i=0;i<K;++i)
         {
             ofarbene[dalsi] = i;
         
@@ -125,15 +136,12 @@ public:
                 s_G[i].push_back(UM[{v, i}]);
     
         start = chrono::high_resolution_clock::now();
+        zafarbitelnost = false;
         
-        if( zafarbi(s_G, to_nodes, ofarbene, 0) )
-        {
-            end = std::chrono::high_resolution_clock::now();
-            return true;
-        }
-        
+        if( zafarbi(s_G, to_nodes, ofarbene, 0) ) zafarbitelnost = true;
+            
         end = std::chrono::high_resolution_clock::now();
-        return false;
+        return (zafarbitelnost);
     }
 };
 
@@ -184,7 +192,7 @@ vector<vector<int> > ofarbenie(const Graph& G, int k, const vector<lbool>& ohodn
     std::map<std::pair<int, int>, int> UM;
     vector<pair<int, int> > back;
     
-    int n = G.size(), m = 0;
+    int m = 0;
     
     for(size_t i=0;i<G.size();++i)
         for(const int v : G[i]) if( UM.find({i, v}) == UM.end() )
@@ -266,53 +274,44 @@ int main()
         
         // vypocet
         
-        bool vysledok = false;
+        bool satisfable = false;
+        string sat_formula;
+        vector<lbool> ohodnotenie;
         
         {
             TimeProfiler x("SAT Solver vypocet " + to_string(f));
-            
-            string sat_formula;
-            vector<lbool> ohodnotenie;
-            
             {
                 TimeProfiler spe("Tvorba formuly " + to_string(f));
                 sat_formula = cnf_colouring(G, 3);
             }
-            
-            if(sat_solve(sat_formula, ohodnotenie))
-            {
-                cout << "Riesenie existuje.\n";
-                vysledok = true;
-                auto kk = ofarbenie(G, 3, ohodnotenie);
-                if(!over(G, 3, kk))
-                {
-                    cout << "Overenie prebehlo NEuspesne\n";
-                    return 0;
-                }
-                else cout << "Overenie prebehlo Uspesne\n";
-            }
-            else cout << "Riesenie neexistuje.\n";
+            satisfable = sat_solve(sat_formula, ohodnotenie);
         }
+          
+        /*
+        if(satisfable)
+        {
+            cout << "Riesenie existuje.\n";
+            auto kk = ofarbenie(G, 3, ohodnotenie);
+            if(!over(G, 3, kk))
+            {
+                cout << "Overenie prebehlo NEuspesne\n";
+                return 0;
+            }
+            else cout << "Overenie prebehlo Uspesne\n";
+        }
+        else cout << "Riesenie neexistuje.\n";
+        */
         
-        backtrack_solver BS(G, 3);
+        backtrack_solver BS(G, 3, 60.0);
         
         bool zaf = BS.je_zafarbitelny();
             
-        if(zaf)
+        if(zaf && !satisfable)
         {
-            cout << "Kontrola : Je zafarbitelny.\n";
-            if(vysledok == false)
-            {
-                cout << "Red flag!\n";
-                char xx;
-                cin >> xx;
-                return 0;
-            }
+            cout << "Chyba\n";
+            return 0;
         }
-        else
-        {
-            cout << "Kontrola : Nie je zafarbitelny.\n";
-        }
+        //BS.print_outcome();
         cout << "Vypocet backtracku trval " << BS.total_time() << "s\n";
         
     }
