@@ -58,7 +58,7 @@ bool sat_solve(const string& input, vector<lbool>& ohodnotenie)
     string format1, format2;
     int clauses_count, variable_count;
     
-    solver.set_num_threads(4);
+    solver.set_num_threads(2);
     
     inp_stream >> format1 >> format2 >> variable_count >> clauses_count;
     
@@ -158,6 +158,9 @@ int main()
     int batch_size;
     cin >> batch_size;
     
+    int opakuj = 5;
+    cout << batch_size << " " << opakuj << "\n";
+    
     for(int f=0;f<batch_size;++f)
     {
         int id, n;
@@ -176,9 +179,12 @@ int main()
             for(const int x : susedia) G[i].push_back(x);
         }
         
-        cout << id << endl;
-        
         // vypocet
+        
+        for(int dd = 0;dd < opakuj; ++dd)
+        {
+        
+        cout << id << endl;
         
         bool satisfable = false;
         string sat_formula;
@@ -206,7 +212,7 @@ int main()
         else cout << "0\n";
         
         
-        backtrack_solver BS(G, 3, 3.0);
+        backtrack_solver BS(G, 3, 1.0);
         
         bool zaf = BS.je_zafarbitelny();
             
@@ -217,7 +223,7 @@ int main()
         }
         //BS.print_outcome();
         cout << "Backtrack: " << BS.total_time() << " ms\n";
-        
+        }
     }
     
     return 0;

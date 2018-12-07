@@ -1,6 +1,6 @@
 all:	tabulka
 
-tabulka: vysledok 
+tabulka:
 	g++ -std=c++17 -O2 -Wall tabulka.cpp -lcryptominisat5 && ./a.out < vystupy/out.txt > vystupy/tabulka.txt
 
 vysledok: vystupy
