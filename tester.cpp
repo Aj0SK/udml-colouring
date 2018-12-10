@@ -212,7 +212,7 @@ int main()
         else cout << "0\n";
         
         
-        backtrack_solver BS(G, 3, 1.0);
+        backtrack_solver BS(G, 3, 10.0);
         
         bool zaf = BS.je_zafarbitelny();
             

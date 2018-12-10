@@ -17,17 +17,17 @@ int main()
         for(int j=0;j<opakuj;++j)
         {
             string junk;
-            int id, cas1, casF, existencia, casB;
+            int id, casS, casF, existencia, casB;
         
             cin >> id;
-            cin >> junk >> cas1 >> junk;
             cin >> junk >> casF >> junk;
+            cin >> junk >> casS >> junk;
             cin >> existencia;
             cin >> junk >> casB >> junk;
             
             kum[0] += id;
-            kum[1] += cas1;
-            kum[2] += casF;
+            kum[1] += casS;
+            kum[2] += casB;
             kum[3] += existencia;
             kum[4] += casF;
         }
